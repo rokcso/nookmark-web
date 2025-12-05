@@ -51,8 +51,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
             __html: `
               (function() {
                 const theme = localStorage.getItem('theme') || 'auto';
-                if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.documentElement.classList.add('dark');
+                const root = document.documentElement;
+                if (theme === 'dark') {
+                  root.classList.add('dark');
+                } else if (theme === 'light') {
+                  root.classList.remove('dark');
+                } else {
+                  // auto mode
+                  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    root.classList.add('dark');
+                  } else {
+                    root.classList.remove('dark');
+                  }
                 }
               })();
             `,
