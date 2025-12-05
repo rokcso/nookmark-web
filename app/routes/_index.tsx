@@ -3,6 +3,13 @@ import type { Route } from './+types/_index';
 import { auth } from '~/lib/auth/auth.server';
 import { Bookmarks, MagnifyingGlass, Tag, Star, Globe, Lightning } from '@phosphor-icons/react';
 
+export const meta: Route.MetaFunction = () => {
+  return [
+    { title: 'Nookmark - Elegant Bookmark Management' },
+    { name: 'description', content: 'Make your web collections valuable with smart bookmarking, tag organization, and full-text search' },
+  ];
+};
+
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await auth.api.getSession({ headers: request.headers });
 
