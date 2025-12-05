@@ -212,7 +212,7 @@ export default function Index() {
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
                   <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white text-sm rounded-md transition-colors flex items-center gap-1.5">
-                    <Plus className="w-4 h-4" weight="bold" />
+                    <Plus className="w-3.5 h-3.5" weight="bold" />
                     Add Bookmark
                   </button>
                 </DialogTrigger>
@@ -287,7 +287,7 @@ export default function Index() {
                 </DialogContent>
               </Dialog>
               <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white text-sm rounded-md transition-colors flex items-center gap-1.5">
-                <Gear className="w-4 h-4" weight="bold" />
+                <Gear className="w-3.5 h-3.5" weight="bold" />
                 Settings
               </button>
             </div>
@@ -394,7 +394,7 @@ export default function Index() {
             {/* Sort and Stats */}
             <div className="flex items-center justify-between text-sm">
               <div className="text-gray-600 dark:text-gray-400">
-                Total <span className="font-semibold text-gray-900 dark:text-white">{bookmarksData.total}</span> bookmarks
+                <span className="font-semibold text-gray-900 dark:text-white">{bookmarksData.total}</span> bookmarks
               </div>
               <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                 <span className="text-xs">Sort by:</span>
