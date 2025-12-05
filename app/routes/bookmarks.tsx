@@ -38,6 +38,7 @@ import { Label } from "~/components/ui/label";
 import { BookmarkCard } from "~/components/BookmarkCard";
 import { TagSidebar } from "~/components/TagSidebar";
 import { BookmarkDialog } from "~/components/BookmarkDialog";
+import { parseTags } from "~/lib/utils";
 import {
   BookmarkSimple,
   MagnifyingGlass,
@@ -117,12 +118,7 @@ export async function action({ request }: ActionFunctionArgs) {
         url,
         title,
         description: description || undefined,
-        tags: tags
-          ? tags
-              .split(/\s+/)
-              .map((t) => t.trim())
-              .filter(Boolean)
-          : [],
+        tags: parseTags(tags),
       });
 
       return { success: true, message: "Bookmark added successfully" };
@@ -149,12 +145,7 @@ export async function action({ request }: ActionFunctionArgs) {
       await updateBookmark(bookmarkId, session.user.id, {
         title,
         description: description || undefined,
-        tags: tags
-          ? tags
-              .split(/\s+/)
-              .map((t) => t.trim())
-              .filter(Boolean)
-          : [],
+        tags: parseTags(tags),
       });
 
       return { success: true, message: "Bookmark updated successfully" };
