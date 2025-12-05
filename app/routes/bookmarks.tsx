@@ -3,9 +3,10 @@ import { useLoaderData, useSubmit, useNavigation, Form } from 'react-router';
 import { useState } from 'react';
 import { requireAuth } from '~/lib/auth/require-auth';
 import { signOut } from '~/lib/auth/auth.client';
-import { getBookmarks, getUserTags, createBookmark, deleteBookmark, toggleBookmarkStar } from '~/lib/bookmarks.server';
+import { getBookmarks, getUserTags, createBookmark, deleteBookmark, toggleBookmarkStar, updateBookmark } from '~/lib/bookmarks.server';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
+import { Textarea } from '~/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
 import { Label } from '~/components/ui/label';
 import { Card, CardContent } from '~/components/ui/card';
@@ -58,7 +59,7 @@ export async function action({ request }: ActionFunctionArgs) {
         url,
         title,
         description: description || undefined,
-        tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        tags: tags ? tags.split(/\s+/).map(t => t.trim()).filter(Boolean) : [],
       });
 
       return { success: true, message: 'Bookmark added successfully' };
@@ -76,6 +77,21 @@ export async function action({ request }: ActionFunctionArgs) {
       return { success: true };
     }
 
+    if (intent === 'update') {
+      const bookmarkId = formData.get('bookmarkId') as string;
+      const title = formData.get('title') as string;
+      const description = formData.get('description') as string;
+      const tags = formData.get('tags') as string;
+
+      await updateBookmark(bookmarkId, session.user.id, {
+        title,
+        description: description || undefined,
+        tags: tags ? tags.split(/\s+/).map(t => t.trim()).filter(Boolean) : [],
+      });
+
+      return { success: true, message: 'Bookmark updated successfully' };
+    }
+
     return { success: false, message: 'Unknown action' };
   } catch (error) {
     console.error('Action error:', error);
@@ -91,12 +107,20 @@ export default function Index() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newBookmark, setNewBookmark] = useState({
     url: '',
     title: '',
     description: '',
     tags: '',
   });
+  const [editingBookmark, setEditingBookmark] = useState<{
+    id: string;
+    url: string;
+    title: string;
+    description: string;
+    tags: string;
+  } | null>(null);
 
   const handleSignOut = async () => {
     await signOut({
@@ -146,6 +170,34 @@ export default function Index() {
     submit(formData, { method: 'post' });
   };
 
+  const handleEditClick = (bookmark: any) => {
+    setEditingBookmark({
+      id: bookmark.bookmark.id,
+      url: bookmark.bookmark.url,
+      title: bookmark.bookmark.title,
+      description: bookmark.bookmark.description || '',
+      tags: bookmark.tags.join(' '),
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditBookmark = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBookmark) return;
+
+    const formData = new FormData();
+    formData.append('intent', 'update');
+    formData.append('bookmarkId', editingBookmark.id);
+    formData.append('title', editingBookmark.title);
+    formData.append('description', editingBookmark.description);
+    formData.append('tags', editingBookmark.tags);
+
+    submit(formData, { method: 'post' });
+    setIsEditDialogOpen(false);
+    setEditingBookmark(null);
+    toast.success('Bookmark updated successfully');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -164,16 +216,13 @@ export default function Index() {
                     Add Bookmark
                   </button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-lg">
                   <DialogHeader>
-                    <DialogTitle>Add New Bookmark</DialogTitle>
-                    <DialogDescription>
-                      Add a new bookmark to your collection
-                    </DialogDescription>
+                    <DialogTitle className="text-xl font-semibold">Add Bookmark</DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleAddBookmark} className="space-y-4 mt-4">
+                  <form onSubmit={handleAddBookmark} className="space-y-5 mt-2">
                     <div className="space-y-2">
-                      <Label htmlFor="url" className="text-sm font-medium">URL *</Label>
+                      <Label htmlFor="url" className="text-sm font-normal text-gray-700 dark:text-gray-300">URL</Label>
                       <Input
                         id="url"
                         type="url"
@@ -185,7 +234,7 @@ export default function Index() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="title" className="text-sm font-medium">Title *</Label>
+                      <Label htmlFor="title" className="text-sm font-normal text-gray-700 dark:text-gray-300">Title</Label>
                       <Input
                         id="title"
                         type="text"
@@ -197,30 +246,40 @@ export default function Index() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="description" className="text-sm font-medium">Description</Label>
-                      <Input
-                        id="description"
-                        type="text"
-                        placeholder="Bookmark description (optional)"
-                        value={newBookmark.description}
-                        onChange={(e) => setNewBookmark({ ...newBookmark, description: e.target.value })}
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="tags" className="text-sm font-medium">Tags</Label>
+                      <Label htmlFor="tags" className="text-sm font-normal text-gray-700 dark:text-gray-300">Tags</Label>
                       <Input
                         id="tags"
                         type="text"
-                        placeholder="tag1, tag2, tag3"
+                        placeholder="Type tags (space to separate)"
                         value={newBookmark.tags}
                         onChange={(e) => setNewBookmark({ ...newBookmark, tags: e.target.value })}
                         className="text-sm"
                       />
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Separate multiple tags with commas</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Press space to add tags</p>
                     </div>
-                    <DialogFooter>
-                      <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700">
+                    <div className="space-y-2">
+                      <Label htmlFor="description" className="text-sm font-normal text-gray-700 dark:text-gray-300">
+                        Description <span className="text-gray-500 dark:text-gray-400">(Optional)</span>
+                      </Label>
+                      <Textarea
+                        id="description"
+                        placeholder="Add a description for this bookmark..."
+                        value={newBookmark.description}
+                        onChange={(e) => setNewBookmark({ ...newBookmark, description: e.target.value })}
+                        className="text-sm min-h-[100px] resize-none"
+                        rows={4}
+                      />
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsAddDialogOpen(false)}
+                        className="text-sm"
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting} className="text-sm bg-blue-600 hover:bg-blue-700">
                         {isSubmitting ? 'Adding...' : 'Add Bookmark'}
                       </Button>
                     </DialogFooter>
@@ -235,6 +294,77 @@ export default function Index() {
           </div>
         </div>
       </header>
+
+      {/* Edit Bookmark Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Edit Bookmark</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditBookmark} className="space-y-5 mt-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-url" className="text-sm font-normal text-gray-700 dark:text-gray-300">URL</Label>
+              <Input
+                id="edit-url"
+                type="url"
+                value={editingBookmark?.url || ''}
+                disabled
+                className="text-sm bg-gray-50 dark:bg-gray-900 cursor-not-allowed"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-title" className="text-sm font-normal text-gray-700 dark:text-gray-300">Title</Label>
+              <Input
+                id="edit-title"
+                type="text"
+                placeholder="Bookmark Title"
+                value={editingBookmark?.title || ''}
+                onChange={(e) => setEditingBookmark(editingBookmark ? { ...editingBookmark, title: e.target.value } : null)}
+                required
+                className="text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-tags" className="text-sm font-normal text-gray-700 dark:text-gray-300">Tags</Label>
+              <Input
+                id="edit-tags"
+                type="text"
+                placeholder="Type tags (space to separate)"
+                value={editingBookmark?.tags || ''}
+                onChange={(e) => setEditingBookmark(editingBookmark ? { ...editingBookmark, tags: e.target.value } : null)}
+                className="text-sm"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">Press space to add tags</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description" className="text-sm font-normal text-gray-700 dark:text-gray-300">
+                Description <span className="text-gray-500 dark:text-gray-400">(Optional)</span>
+              </Label>
+              <Textarea
+                id="edit-description"
+                placeholder="Add a description for this bookmark..."
+                value={editingBookmark?.description || ''}
+                onChange={(e) => setEditingBookmark(editingBookmark ? { ...editingBookmark, description: e.target.value } : null)}
+                className="text-sm min-h-[100px] resize-none"
+                rows={4}
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+                className="text-sm"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="text-sm bg-blue-600 hover:bg-blue-700">
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Search and Filter Bar */}
       <div className="max-w-5xl mx-auto px-6 py-4">
@@ -335,7 +465,12 @@ export default function Index() {
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <span>{new Date(item.bookmark.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                           <span>•</span>
-                          <button className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Edit</button>
+                          <button
+                            onClick={() => handleEditClick(item)}
+                            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          >
+                            Edit
+                          </button>
                           <button className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Archive</button>
                           <button
                             onClick={() => handleDeleteBookmark(item.bookmark.id)}
