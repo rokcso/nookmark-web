@@ -17,11 +17,11 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-// Redirect to home if already logged in
+// Redirect to bookmarks if already logged in
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (session) {
-    throw redirect('/');
+    throw redirect('/bookmarks');
   }
   return null;
 }
@@ -39,7 +39,7 @@ export default function Login() {
       await signIn.email({
         email,
         password,
-        callbackURL: '/',
+        callbackURL: '/bookmarks',
       });
     } catch (error) {
       toast.error('登录失败，请检查邮箱和密码');
@@ -54,7 +54,7 @@ export default function Login() {
     try {
       await signIn.social({
         provider: 'google',
-        callbackURL: '/',
+        callbackURL: '/bookmarks',
       });
     } catch (error) {
       toast.error('Google 登录失败');

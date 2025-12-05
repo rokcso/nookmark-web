@@ -17,11 +17,11 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-// Redirect to home if already logged in
+// Redirect to bookmarks if already logged in
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (session) {
-    throw redirect('/');
+    throw redirect('/bookmarks');
   }
   return null;
 }
@@ -53,7 +53,7 @@ export default function Signup() {
         email,
         password,
         name,
-        callbackURL: '/',
+        callbackURL: '/bookmarks',
       });
       toast.success('注册成功！');
     } catch (error) {
@@ -69,7 +69,7 @@ export default function Signup() {
     try {
       await signIn.social({
         provider: 'google',
-        callbackURL: '/',
+        callbackURL: '/bookmarks',
       });
     } catch (error) {
       toast.error('Google 注册失败');

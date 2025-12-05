@@ -1,455 +1,207 @@
-import { type MetaFunction, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
-import { useLoaderData, useSubmit, useNavigation, Form } from 'react-router';
-import { useState } from 'react';
-import { requireAuth } from '~/lib/auth/require-auth';
-import { signOut } from '~/lib/auth/auth.client';
-import { getBookmarks, getUserTags, createBookmark, deleteBookmark, toggleBookmarkStar } from '~/lib/bookmarks.server';
-import { Button } from '~/components/ui/button';
-import { Input } from '~/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
-import { Label } from '~/components/ui/label';
-import { Card, CardContent } from '~/components/ui/card';
-import { BookmarkSimple, SignOut, MagnifyingGlass, Plus, Star, Trash, Tag as TagIcon, Gear } from '@phosphor-icons/react';
-import { toast } from 'sonner';
-import type { Session } from '~/lib/auth/auth.server';
+import { Link, redirect } from 'react-router';
+import type { Route } from './+types/_index';
+import { auth } from '~/lib/auth/auth.server';
+import { Bookmarks, MagnifyingGlass, Tag, Star, Globe, Lightning } from '@phosphor-icons/react';
 
-export const meta: MetaFunction = () => {
-  return [
-    { title: 'Nookmark - 书签管理' },
-    { name: 'description', content: '智能书签管理系统' },
-  ];
-};
+export async function loader({ request }: Route.LoaderArgs) {
+  const session = await auth.api.getSession({ headers: request.headers });
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const session = await requireAuth(request);
-
-  const url = new URL(request.url);
-  const search = url.searchParams.get('search') || undefined;
-  const starred = url.searchParams.get('starred') === 'true' || undefined;
-  const page = parseInt(url.searchParams.get('page') || '1');
-
-  const [bookmarksData, tagsData] = await Promise.all([
-    getBookmarks({
-      userId: session.user.id,
-      filters: { search, starred },
-      page,
-      pageSize: 50,
-    }),
-    getUserTags(session.user.id),
-  ]);
-
-  return { session, bookmarksData, tagsData };
-}
-
-export async function action({ request }: ActionFunctionArgs) {
-  const session = await requireAuth(request);
-  const formData = await request.formData();
-  const intent = formData.get('intent');
-
-  try {
-    if (intent === 'create') {
-      const url = formData.get('url') as string;
-      const title = formData.get('title') as string;
-      const description = formData.get('description') as string;
-      const tags = formData.get('tags') as string;
-
-      await createBookmark({
-        userId: session.user.id,
-        url,
-        title,
-        description: description || undefined,
-        tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-      });
-
-      return { success: true, message: '书签添加成功' };
-    }
-
-    if (intent === 'delete') {
-      const bookmarkId = formData.get('bookmarkId') as string;
-      await deleteBookmark(bookmarkId, session.user.id);
-      return { success: true, message: '书签已删除' };
-    }
-
-    if (intent === 'toggleStar') {
-      const bookmarkId = formData.get('bookmarkId') as string;
-      await toggleBookmarkStar(bookmarkId, session.user.id);
-      return { success: true };
-    }
-
-    return { success: false, message: '未知操作' };
-  } catch (error) {
-    console.error('Action error:', error);
-    return { success: false, message: error instanceof Error ? error.message : '操作失败' };
+  // If user is already logged in, redirect to bookmarks
+  if (session) {
+    throw redirect('/bookmarks');
   }
+
+  return null;
 }
 
-export default function Index() {
-  const { session, bookmarksData, tagsData } = useLoaderData<typeof loader>();
-  const submit = useSubmit();
-  const navigation = useNavigation();
-  const isSubmitting = navigation.state === 'submitting';
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newBookmark, setNewBookmark] = useState({
-    url: '',
-    title: '',
-    description: '',
-    tags: '',
-  });
-
-  const handleSignOut = async () => {
-    await signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          window.location.href = '/login';
-        },
-      },
-    });
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    submit(form);
-  };
-
-  const handleAddBookmark = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('intent', 'create');
-    formData.append('url', newBookmark.url);
-    formData.append('title', newBookmark.title);
-    formData.append('description', newBookmark.description);
-    formData.append('tags', newBookmark.tags);
-
-    submit(formData, { method: 'post' });
-    setIsAddDialogOpen(false);
-    setNewBookmark({ url: '', title: '', description: '', tags: '' });
-    toast.success('书签添加成功');
-  };
-
-  const handleDeleteBookmark = (bookmarkId: string) => {
-    if (!confirm('确定要删除这个书签吗？')) return;
-
-    const formData = new FormData();
-    formData.append('intent', 'delete');
-    formData.append('bookmarkId', bookmarkId);
-    submit(formData, { method: 'post' });
-    toast.success('书签已删除');
-  };
-
-  const handleToggleStar = (bookmarkId: string) => {
-    const formData = new FormData();
-    formData.append('intent', 'toggleStar');
-    formData.append('bookmarkId', bookmarkId);
-    submit(formData, { method: 'post' });
-  };
-
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-5xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity">
-              <BookmarkSimple className="w-7 h-7 text-blue-600 dark:text-blue-400" weight="fill" />
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Nookmark</h1>
-            </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      {/* Navigation */}
+      <nav className="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white text-sm rounded-md transition-colors flex items-center gap-1.5">
-                    <Plus className="w-4 h-4" weight="bold" />
-                    添加书签
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>添加新书签</DialogTitle>
-                    <DialogDescription>
-                      添加一个新的书签到你的收藏
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleAddBookmark} className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="url" className="text-sm font-medium">URL *</Label>
-                      <Input
-                        id="url"
-                        type="url"
-                        placeholder="https://example.com"
-                        value={newBookmark.url}
-                        onChange={(e) => setNewBookmark({ ...newBookmark, url: e.target.value })}
-                        required
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="title" className="text-sm font-medium">标题 *</Label>
-                      <Input
-                        id="title"
-                        type="text"
-                        placeholder="书签标题"
-                        value={newBookmark.title}
-                        onChange={(e) => setNewBookmark({ ...newBookmark, title: e.target.value })}
-                        required
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="description" className="text-sm font-medium">描述</Label>
-                      <Input
-                        id="description"
-                        type="text"
-                        placeholder="书签描述（可选）"
-                        value={newBookmark.description}
-                        onChange={(e) => setNewBookmark({ ...newBookmark, description: e.target.value })}
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="tags" className="text-sm font-medium">标签</Label>
-                      <Input
-                        id="tags"
-                        type="text"
-                        placeholder="标签1, 标签2, 标签3"
-                        value={newBookmark.tags}
-                        onChange={(e) => setNewBookmark({ ...newBookmark, tags: e.target.value })}
-                        className="text-sm"
-                      />
-                      <p className="text-xs text-gray-500 dark:text-gray-400">用逗号分隔多个标签</p>
-                    </div>
-                    <DialogFooter>
-                      <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700">
-                        {isSubmitting ? '添加中...' : '添加书签'}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
-              <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white text-sm rounded-md transition-colors flex items-center gap-1.5">
-                <Gear className="w-4 h-4" weight="bold" />
-                设置
-              </button>
+              <img src="/logo.png" alt="Nookmark" className="w-8 h-8" />
+              <span className="text-xl font-bold text-gray-900 dark:text-white">Nookmark</span>
             </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Search and Filter Bar */}
-      <div className="max-w-5xl mx-auto px-6 py-4">
-        <Form method="get" onSubmit={handleSearch} className="flex items-center gap-2">
-          <div className="flex-1 relative">
-            <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" weight="bold" />
-            <Input
-              type="search"
-              name="search"
-              placeholder="搜索书签（标题、描述、URL）..."
-              className="pl-9 text-sm bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
-              defaultValue={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Button type="submit" variant="outline" size="sm" className="text-sm">
-            搜索
-          </Button>
-        </Form>
-      </div>
-
-      {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-6 py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Bookmarks List - 2/3 width */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Sort and Stats */}
-            <div className="flex items-center justify-between text-sm">
-              <div className="text-gray-600 dark:text-gray-400">
-                共 <span className="font-semibold text-gray-900 dark:text-white">{bookmarksData.total}</span> 个书签
-              </div>
-              <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                <span className="text-xs">排序：</span>
-                <select className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-2 py-1">
-                  <option>创建时间 ↓</option>
-                  <option>更新时间 ↓</option>
-                  <option>标题 A-Z</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Bookmarks List */}
-            {bookmarksData.bookmarks.length === 0 ? (
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
-                <BookmarkSimple className="mx-auto w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" weight="light" />
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  {searchTerm ? '没有找到匹配的书签' : '还没有书签，开始添加吧！'}
-                </p>
-                <button
-                  onClick={() => setIsAddDialogOpen(true)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition-colors inline-flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" weight="bold" />
-                  添加第一个书签
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {bookmarksData.bookmarks.map((item) => (
-                  <div
-                    key={item.bookmark.id}
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all group"
-                  >
-                    <div className="flex items-start gap-3">
-                      {/* Favicon */}
-                      {item.bookmark.favicon && (
-                        <img
-                          src={item.bookmark.favicon}
-                          alt=""
-                          className="w-4 h-4 mt-0.5 flex-shrink-0"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      )}
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        {/* Title and Star */}
-                        <div className="flex items-start justify-between gap-2 mb-1.5">
-                          <h3 className="font-medium text-gray-900 dark:text-white text-sm leading-snug">
-                            {item.bookmark.title}
-                            {item.bookmark.starred && (
-                              <Star className="inline-block ml-1.5 w-3.5 h-3.5 text-yellow-500" weight="fill" />
-                            )}
-                          </h3>
-                        </div>
-
-                        {/* URL */}
-                        <a
-                          href={item.bookmark.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline block mb-2 truncate"
-                        >
-                          {item.bookmark.url}
-                        </a>
-
-                        {/* Description */}
-                        {item.bookmark.description && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2 leading-relaxed">
-                            {item.bookmark.description}
-                          </p>
-                        )}
-
-                        {/* Tags */}
-                        {item.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {item.tags.map((tag) => (
-                              <span
-                                key={tag}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs"
-                              >
-                                <TagIcon className="w-3 h-3" weight="bold" />
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => handleToggleStar(item.bookmark.id)}
-                          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                          title={item.bookmark.starred ? '取消收藏' : '收藏'}
-                        >
-                          <Star
-                            className="w-4 h-4 text-gray-600 dark:text-gray-400"
-                            weight={item.bookmark.starred ? 'fill' : 'regular'}
-                          />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteBookmark(item.bookmark.id)}
-                          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                          title="删除"
-                        >
-                          <Trash className="w-4 h-4 text-gray-600 dark:text-gray-400" weight="bold" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Pagination */}
-            {bookmarksData.totalPages > 1 && (
-              <div className="flex justify-center gap-1 pt-4">
-                {Array.from({ length: Math.min(bookmarksData.totalPages, 7) }, (_, i) => i + 1).map((page) => (
-                  <Form key={page} method="get" className="inline">
-                    <input type="hidden" name="search" value={searchTerm} />
-                    <input type="hidden" name="page" value={page} />
-                    <button
-                      type="submit"
-                      className={`px-3 py-1 text-xs rounded transition-colors ${
-                        page === bookmarksData.page
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  </Form>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar - Tags - 1/3 width */}
-          <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sticky top-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <TagIcon className="w-4 h-4" weight="bold" />
-                标签云
-              </h3>
-              {tagsData.length === 0 ? (
-                <p className="text-xs text-gray-500 dark:text-gray-400">还没有标签</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {tagsData.slice(0, 20).map((item) => (
-                    <button
-                      key={item.tag.id}
-                      className="w-full flex items-center justify-between text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 px-2 py-1.5 rounded transition-colors text-left group"
-                    >
-                      <span className="text-gray-700 dark:text-gray-300 truncate text-xs">
-                        {item.tag.name}
-                      </span>
-                      <span className="text-gray-400 dark:text-gray-500 text-xs ml-2 flex-shrink-0">
-                        {item.count}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* User Info Card */}
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mt-4">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">当前用户</div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white mb-3 truncate">
-                {session.user.name || session.user.email}
-              </div>
-              <button
-                onClick={handleSignOut}
-                className="w-full px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded transition-colors flex items-center justify-center gap-1.5"
+            <div className="flex items-center gap-3">
+              <Link
+                to="/login"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
-                <SignOut className="w-3.5 h-3.5" weight="bold" />
-                退出登录
-              </button>
+                登录
+              </Link>
+              <Link
+                to="/signup"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+              >
+                免费注册
+              </Link>
             </div>
           </div>
         </div>
-      </main>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="px-4 sm:px-6 lg:px-8 pt-20 pb-16 md:pt-32 md:pb-24">
+        <div className="max-w-6xl mx-auto text-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+            优雅的书签管理工具
+            <br />
+            <span className="text-blue-600 dark:text-blue-500">让收藏更有价值</span>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto">
+            Nookmark 帮助你更好地组织和管理网页收藏，让重要的内容触手可及。支持标签分类、全文搜索、收藏星标等强大功能。
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/signup"
+              className="w-full sm:w-auto px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg hover:shadow-xl transition-all"
+            >
+              免费开始使用
+            </Link>
+            <Link
+              to="/login"
+              className="w-full sm:w-auto px-8 py-3 text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 rounded-lg transition-all"
+            >
+              已有账号？登录
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="px-4 sm:px-6 lg:px-8 py-16 md:py-24 bg-white dark:bg-gray-800/50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-4">
+            为什么选择 Nookmark？
+          </h2>
+          <p className="text-center text-gray-600 dark:text-gray-400 mb-16 max-w-2xl mx-auto">
+            我们提供简洁而强大的功能，让你的书签管理更加高效
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all hover:shadow-lg bg-white dark:bg-gray-800">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
+                <Bookmarks className="w-6 h-6 text-blue-600 dark:text-blue-500" weight="duotone" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                智能收藏
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                一键保存网页，自动提取标题、描述和图标，让你的收藏更加完整
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all hover:shadow-lg bg-white dark:bg-gray-800">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
+                <Tag className="w-6 h-6 text-purple-600 dark:text-purple-500" weight="duotone" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                标签分类
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                使用标签灵活组织书签，支持多标签，让分类更加精确
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all hover:shadow-lg bg-white dark:bg-gray-800">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4">
+                <MagnifyingGlass className="w-6 h-6 text-green-600 dark:text-green-500" weight="duotone" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                全文搜索
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                快速搜索标题、描述和 URL，即时找到你需要的书签
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all hover:shadow-lg bg-white dark:bg-gray-800">
+              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center mb-4">
+                <Star className="w-6 h-6 text-yellow-600 dark:text-yellow-500" weight="duotone" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                收藏星标
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                为重要书签添加星标，快速访问常用内容
+              </p>
+            </div>
+
+            {/* Feature 5 */}
+            <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all hover:shadow-lg bg-white dark:bg-gray-800">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center mb-4">
+                <Globe className="w-6 h-6 text-red-600 dark:text-red-500" weight="duotone" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                多端同步
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                云端存储，随时随地访问你的书签，支持 Web 和浏览器扩展
+              </p>
+            </div>
+
+            {/* Feature 6 */}
+            <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all hover:shadow-lg bg-white dark:bg-gray-800">
+              <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center mb-4">
+                <Lightning className="w-6 h-6 text-indigo-600 dark:text-indigo-500" weight="duotone" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                快速高效
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                简洁的界面设计，流畅的操作体验，让书签管理更加轻松
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
+            准备好开始了吗？
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
+            立即注册，免费使用 Nookmark 管理你的网页收藏
+          </p>
+          <Link
+            to="/signup"
+            className="inline-block px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg hover:shadow-xl transition-all"
+          >
+            免费注册
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Nookmark" className="w-6 h-6" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                © 2024 Nookmark. All rights reserved.
+              </span>
+            </div>
+            <div className="flex items-center gap-6">
+              <Link to="/login" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                登录
+              </Link>
+              <Link to="/signup" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                注册
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
