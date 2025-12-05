@@ -1,5 +1,5 @@
 import { type MetaFunction, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
-import { useLoaderData, useSubmit, useNavigation, useNavigate, Form } from 'react-router';
+import { useLoaderData, useSubmit, useNavigation, useNavigate, useSearchParams, Form } from 'react-router';
 import { useState } from 'react';
 import { requireAuth } from '~/lib/auth/require-auth';
 import { signOut } from '~/lib/auth/auth.client';
@@ -109,9 +109,10 @@ export default function Index() {
   const submit = useSubmit();
   const navigation = useNavigation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isSubmitting = navigation.state === 'submitting';
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newBookmark, setNewBookmark] = useState({
@@ -205,11 +206,15 @@ export default function Index() {
   };
 
   const handleTagClick = (tagName: string) => {
-    navigate(`/bookmarks?tag=${encodeURIComponent(tagName)}`);
+    const params = new URLSearchParams(searchParams);
+    params.set('tag', tagName);
+    navigate(`/bookmarks?${params.toString()}`);
   };
 
   const handleClearFilter = () => {
-    navigate('/bookmarks');
+    const params = new URLSearchParams(searchParams);
+    params.delete('tag');
+    navigate(`/bookmarks?${params.toString()}`);
   };
 
   return (
@@ -383,6 +388,7 @@ export default function Index() {
       {/* Search and Filter Bar */}
       <div className="max-w-5xl mx-auto px-6 py-4">
         <Form method="get" onSubmit={handleSearch} className="flex items-center gap-2">
+          {activeTag && <input type="hidden" name="tag" value={activeTag} />}
           <div className="flex-1 relative">
             <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" weight="bold" />
             <Input
@@ -529,6 +535,7 @@ export default function Index() {
                 {Array.from({ length: Math.min(bookmarksData.totalPages, 7) }, (_, i) => i + 1).map((page) => (
                   <Form key={page} method="get" className="inline">
                     <input type="hidden" name="search" value={searchTerm} />
+                    {activeTag && <input type="hidden" name="tag" value={activeTag} />}
                     <input type="hidden" name="page" value={page} />
                     <button
                       type="submit"
