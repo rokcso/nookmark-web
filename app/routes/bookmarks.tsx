@@ -1,5 +1,5 @@
 import { type MetaFunction, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
-import { useLoaderData, useSubmit, useNavigation, useNavigate, useSearchParams, Form } from 'react-router';
+import { useLoaderData, useSubmit, useNavigation, useNavigate, useSearchParams, Form, Link } from 'react-router';
 import { useState } from 'react';
 import { requireAuth } from '~/lib/auth/require-auth';
 import { signOut } from '~/lib/auth/auth.client';
@@ -223,10 +223,10 @@ export default function Index() {
       <header className="">
         <div className="max-w-5xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
+            <Link to="/bookmarks" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
               <img src="/logo.png" alt="Nookmark" className="w-8 h-8" />
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Nookmark</h1>
-            </div>
+            </Link>
             <div className="flex items-center gap-2">
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
