@@ -162,7 +162,7 @@ export async function getBookmarks(options: BookmarkListOptions) {
   const sortColumn = bookmark[sortBy];
   const orderFn = sortOrder === 'asc' ? asc : desc;
 
-  // Get bookmarks
+  // Build query with tag filter if specified
   let query = db
     .select({
       bookmark,
@@ -177,33 +177,47 @@ export async function getBookmarks(options: BookmarkListOptions) {
     .leftJoin(bookmarkTag, eq(bookmark.id, bookmarkTag.bookmarkId))
     .leftJoin(tag, eq(bookmarkTag.tagId, tag.id))
     .where(and(...conditions))
-    .groupBy(bookmark.id)
+    .groupBy(bookmark.id);
+
+  // Add tag filter using HAVING clause
+  if (filters.tags && filters.tags.length > 0) {
+    query = query.having(
+      sql`array_agg(${tag.name}) @> ARRAY[${sql.raw(filters.tags.map(t => `'${t}'`).join(','))}]::text[]`
+    );
+  }
+
+  const bookmarks = await query
     .orderBy(orderFn(sortColumn))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
-  const bookmarks = await query;
-
-  // Filter by tags if specified
-  let filteredBookmarks = bookmarks;
-  if (filters.tags && filters.tags.length > 0) {
-    filteredBookmarks = bookmarks.filter((b) =>
-      filters.tags!.every((filterTag) => b.tags.includes(filterTag))
-    );
-  }
-
-  // Get total count
-  const [{ count }] = await db
-    .select({ count: sql<number>`count(*)` })
+  // Get total count with tag filter
+  let countQuery = db
+    .select({ count: sql<number>`count(DISTINCT ${bookmark.id})` })
     .from(bookmark)
+    .leftJoin(bookmarkTag, eq(bookmark.id, bookmarkTag.bookmarkId))
+    .leftJoin(tag, eq(bookmarkTag.tagId, tag.id))
     .where(and(...conditions));
 
+  if (filters.tags && filters.tags.length > 0) {
+    countQuery = countQuery
+      .groupBy(bookmark.id)
+      .having(
+        sql`array_agg(${tag.name}) @> ARRAY[${sql.raw(filters.tags.map(t => `'${t}'`).join(','))}]::text[]`
+      );
+  }
+
+  const countResult = await countQuery;
+  const totalCount = filters.tags && filters.tags.length > 0
+    ? countResult.length
+    : Number(countResult[0]?.count || 0);
+
   return {
-    bookmarks: filteredBookmarks,
-    total: Number(count),
+    bookmarks,
+    total: totalCount,
     page,
     pageSize,
-    totalPages: Math.ceil(Number(count) / pageSize),
+    totalPages: Math.ceil(totalCount / pageSize),
   };
 }
 
