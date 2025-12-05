@@ -1,5 +1,5 @@
 import { type MetaFunction, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
-import { useLoaderData, useSubmit, useNavigation, Form } from 'react-router';
+import { useLoaderData, useSubmit, useNavigation, useNavigate, Form } from 'react-router';
 import { useState } from 'react';
 import { requireAuth } from '~/lib/auth/require-auth';
 import { signOut } from '~/lib/auth/auth.client';
@@ -27,19 +27,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const search = url.searchParams.get('search') || undefined;
   const starred = url.searchParams.get('starred') === 'true' || undefined;
+  const tagFilter = url.searchParams.get('tag') || undefined;
   const page = parseInt(url.searchParams.get('page') || '1');
 
   const [bookmarksData, tagsData] = await Promise.all([
     getBookmarks({
       userId: session.user.id,
-      filters: { search, starred },
+      filters: {
+        search,
+        starred,
+        tags: tagFilter ? [tagFilter] : undefined,
+      },
       page,
       pageSize: 50,
     }),
     getUserTags(session.user.id),
   ]);
 
-  return { session, bookmarksData, tagsData };
+  return { session, bookmarksData, tagsData, activeTag: tagFilter };
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -100,9 +105,10 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function Index() {
-  const { session, bookmarksData, tagsData } = useLoaderData<typeof loader>();
+  const { session, bookmarksData, tagsData, activeTag } = useLoaderData<typeof loader>();
   const submit = useSubmit();
   const navigation = useNavigation();
+  const navigate = useNavigate();
   const isSubmitting = navigation.state === 'submitting';
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -196,6 +202,14 @@ export default function Index() {
     setIsEditDialogOpen(false);
     setEditingBookmark(null);
     toast.success('Bookmark updated successfully');
+  };
+
+  const handleTagClick = (tagName: string) => {
+    navigate(`/bookmarks?tag=${encodeURIComponent(tagName)}`);
+  };
+
+  const handleClearFilter = () => {
+    navigate('/bookmarks');
   };
 
   return (
@@ -406,6 +420,22 @@ export default function Index() {
               </div>
             </div>
 
+            {/* Active Filter */}
+            {activeTag && (
+              <div className="flex items-center gap-2 text-sm bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2">
+                <TagIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" weight="bold" />
+                <span className="text-blue-700 dark:text-blue-300">
+                  Filtered by tag: <span className="font-semibold">{activeTag}</span>
+                </span>
+                <button
+                  onClick={handleClearFilter}
+                  className="ml-auto text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline"
+                >
+                  Clear filter
+                </button>
+              </div>
+            )}
+
             {/* Bookmarks List */}
             {bookmarksData.bookmarks.length === 0 ? (
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
@@ -519,27 +549,47 @@ export default function Index() {
           {/* Sidebar - Tags - 1/3 width */}
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sticky top-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <TagIcon className="w-4 h-4" weight="bold" />
-                Tags
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <TagIcon className="w-4 h-4" weight="bold" />
+                  Tags
+                </h3>
+                {activeTag && (
+                  <button
+                    onClick={handleClearFilter}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
               {tagsData.length === 0 ? (
                 <p className="text-xs text-gray-500 dark:text-gray-400">No tags yet</p>
               ) : (
                 <div className="space-y-1.5">
-                  {tagsData.slice(0, 20).map((item) => (
-                    <button
-                      key={item.tag.id}
-                      className="w-full flex items-center justify-between text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 px-2 py-1.5 rounded transition-colors text-left group"
-                    >
-                      <span className="text-gray-700 dark:text-gray-300 truncate text-xs">
-                        {item.tag.name}
-                      </span>
-                      <span className="text-gray-400 dark:text-gray-500 text-xs ml-2 flex-shrink-0">
-                        {item.count}
-                      </span>
-                    </button>
-                  ))}
+                  {tagsData.slice(0, 20).map((item) => {
+                    const isActive = activeTag === item.tag.name;
+                    return (
+                      <button
+                        key={item.tag.id}
+                        onClick={() => handleTagClick(item.tag.name)}
+                        className={`w-full flex items-center justify-between text-sm px-2 py-1.5 rounded transition-colors text-left group ${
+                          isActive
+                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        <span className="truncate text-xs">
+                          {item.tag.name}
+                        </span>
+                        <span className={`text-xs ml-2 flex-shrink-0 ${
+                          isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'
+                        }`}>
+                          {item.count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
