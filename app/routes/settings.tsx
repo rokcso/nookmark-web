@@ -81,158 +81,175 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="max-w-3xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-4">
+      <header>
+        <div className="max-w-5xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <img src="/logo.png" alt="Nookmark" className="w-7 h-7" />
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Settings
+              </h1>
+            </div>
             <Link
               to="/bookmarks"
-              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white text-sm rounded-md transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" weight="bold" />
-              <span className="text-sm">Back to Bookmarks</span>
+              ← Back to Bookmarks
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-3xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Settings</h1>
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        {/* Appearance & Display Section */}
+        <section className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+              Appearance & Display
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Customize how Nookmark looks and displays your bookmarks
+            </p>
+          </div>
 
-        <div className="space-y-6">
-          {/* User Info Section */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                    <User className="w-6 h-6 text-blue-600 dark:text-blue-400" weight="bold" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Account</h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{session.user.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-500">{session.user.email}</p>
-                  </div>
+          {/* Theme Selection */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+              Theme Mode
+            </h3>
+            <div className="space-y-2">
+              {/* Auto Theme */}
+              <label
+                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                  theme === 'auto'
+                    ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-600 dark:border-blue-500 shadow-sm'
+                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="theme"
+                  value="auto"
+                  checked={theme === 'auto'}
+                  onChange={() => handleThemeChange('auto')}
+                  className="w-4 h-4 text-blue-600 focus:ring-blue-500 dark:text-blue-500 dark:focus:ring-blue-500"
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    Auto
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Follow system theme
+                  </p>
                 </div>
-                <Button
-                  onClick={handleSignOut}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <SignOut className="w-4 h-4" weight="bold" />
-                  Sign Out
-                </Button>
+                <Desktop
+                  className={`w-5 h-5 ${theme === 'auto' ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400'}`}
+                  weight="regular"
+                />
+              </label>
+
+              {/* Light Theme */}
+              <label
+                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                  theme === 'light'
+                    ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-600 dark:border-blue-500 shadow-sm'
+                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="theme"
+                  value="light"
+                  checked={theme === 'light'}
+                  onChange={() => handleThemeChange('light')}
+                  className="w-4 h-4 text-blue-600 focus:ring-blue-500 dark:text-blue-500 dark:focus:ring-blue-500"
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    Light
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Always use light theme
+                  </p>
+                </div>
+                <Sun
+                  className={`w-5 h-5 ${theme === 'light' ? 'text-amber-500' : 'text-gray-400'}`}
+                  weight="regular"
+                />
+              </label>
+
+              {/* Dark Theme */}
+              <label
+                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                  theme === 'dark'
+                    ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-600 dark:border-blue-500 shadow-sm'
+                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="theme"
+                  value="dark"
+                  checked={theme === 'dark'}
+                  onChange={() => handleThemeChange('dark')}
+                  className="w-4 h-4 text-blue-600 focus:ring-blue-500 dark:text-blue-500 dark:focus:ring-blue-500"
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    Dark
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Always use dark theme
+                  </p>
+                </div>
+                <Moon
+                  className={`w-5 h-5 ${theme === 'dark' ? 'text-indigo-500' : 'text-gray-400'}`}
+                  weight="regular"
+                />
+              </label>
+            </div>
+          </div>
+        </section>
+
+        {/* Account Section */}
+        <section className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+              Account
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Manage your account information and preferences
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400" weight="bold" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                    {session.user.name}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {session.user.email}
+                  </p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Theme Section */}
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Appearance</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Choose how Nookmark looks to you. Select a single theme, or sync with your system.
-              </p>
-
-              <div className="grid grid-cols-3 gap-3">
-                {/* Light Theme */}
-                <button
-                  onClick={() => handleThemeChange('light')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    theme === 'light'
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                  }`}
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'light'
-                        ? 'bg-blue-100 dark:bg-blue-900/30'
-                        : 'bg-gray-100 dark:bg-gray-800'
-                    }`}>
-                      <Sun className={`w-5 h-5 ${
-                        theme === 'light'
-                          ? 'text-blue-600 dark:text-blue-400'
-                          : 'text-gray-600 dark:text-gray-400'
-                      }`} weight="bold" />
-                    </div>
-                    <span className={`text-sm font-medium ${
-                      theme === 'light'
-                        ? 'text-blue-700 dark:text-blue-300'
-                        : 'text-gray-700 dark:text-gray-300'
-                    }`}>
-                      Light
-                    </span>
-                  </div>
-                </button>
-
-                {/* Dark Theme */}
-                <button
-                  onClick={() => handleThemeChange('dark')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    theme === 'dark'
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                  }`}
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'dark'
-                        ? 'bg-blue-100 dark:bg-blue-900/30'
-                        : 'bg-gray-100 dark:bg-gray-800'
-                    }`}>
-                      <Moon className={`w-5 h-5 ${
-                        theme === 'dark'
-                          ? 'text-blue-600 dark:text-blue-400'
-                          : 'text-gray-600 dark:text-gray-400'
-                      }`} weight="bold" />
-                    </div>
-                    <span className={`text-sm font-medium ${
-                      theme === 'dark'
-                        ? 'text-blue-700 dark:text-blue-300'
-                        : 'text-gray-700 dark:text-gray-300'
-                    }`}>
-                      Dark
-                    </span>
-                  </div>
-                </button>
-
-                {/* Auto Theme */}
-                <button
-                  onClick={() => handleThemeChange('auto')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    theme === 'auto'
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                  }`}
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      theme === 'auto'
-                        ? 'bg-blue-100 dark:bg-blue-900/30'
-                        : 'bg-gray-100 dark:bg-gray-800'
-                    }`}>
-                      <Desktop className={`w-5 h-5 ${
-                        theme === 'auto'
-                          ? 'text-blue-600 dark:text-blue-400'
-                          : 'text-gray-600 dark:text-gray-400'
-                      }`} weight="bold" />
-                    </div>
-                    <span className={`text-sm font-medium ${
-                      theme === 'auto'
-                        ? 'text-blue-700 dark:text-blue-300'
-                        : 'text-gray-700 dark:text-gray-300'
-                    }`}>
-                      Auto
-                    </span>
-                  </div>
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <SignOut className="w-4 h-4" weight="bold" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
