@@ -22,31 +22,50 @@ import {
   toggleBookmarkStar,
   updateBookmark,
 } from "~/lib/bookmarks.server";
+import { PAGINATION, TAGS } from "~/lib/constants";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
 import { Label } from "~/components/ui/label";
-import { Card, CardContent } from "~/components/ui/card";
+import { BookmarkCard } from "~/components/BookmarkCard";
+import { TagSidebar } from "~/components/TagSidebar";
+import { BookmarkDialog } from "~/components/BookmarkDialog";
 import {
   BookmarkSimple,
   MagnifyingGlass,
   Plus,
   Star,
-  Trash,
   Tag as TagIcon,
   Gear,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import type { Session } from "~/lib/auth/auth.server";
+
+// Type definitions for bookmark data
+interface BookmarkData {
+  bookmark: {
+    id: string;
+    userId: string;
+    url: string;
+    title: string;
+    description: string | null;
+    favicon: string | null;
+    starred: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    archivedAt: Date | null;
+    deletedAt: Date | null;
+  };
+  tags: string[];
+}
 
 export const meta: MetaFunction = () => {
   return [
@@ -73,7 +92,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         tags: tagFilter ? [tagFilter] : undefined,
       },
       page,
-      pageSize: 50,
+      pageSize: PAGINATION.DEFAULT_PAGE_SIZE,
     }),
     getUserTags(session.user.id),
   ]);
@@ -217,13 +236,13 @@ export default function Index() {
     submit(formData, { method: "post" });
   };
 
-  const handleEditClick = (bookmark: any) => {
+  const handleEditClick = (bookmarkData: BookmarkData) => {
     setEditingBookmark({
-      id: bookmark.bookmark.id,
-      url: bookmark.bookmark.url,
-      title: bookmark.bookmark.title,
-      description: bookmark.bookmark.description || "",
-      tags: bookmark.tags.join(" "),
+      id: bookmarkData.bookmark.id,
+      url: bookmarkData.bookmark.url,
+      title: bookmarkData.bookmark.title,
+      description: bookmarkData.bookmark.description || "",
+      tags: bookmarkData.tags.join(" "),
     });
     setIsEditDialogOpen(true);
   };
@@ -711,7 +730,7 @@ export default function Index() {
             {bookmarksData.totalPages > 1 && (
               <div className="flex justify-center gap-1 pt-4">
                 {Array.from(
-                  { length: Math.min(bookmarksData.totalPages, 7) },
+                  { length: Math.min(bookmarksData.totalPages, PAGINATION.MAX_VISIBLE_PAGES) },
                   (_, i) => i + 1,
                 ).map((page) => (
                   <Form key={page} method="get" className="inline">
@@ -759,7 +778,7 @@ export default function Index() {
                 </p>
               ) : (
                 <div className="space-y-1.5">
-                  {tagsData.slice(0, 20).map((item) => {
+                  {tagsData.slice(0, TAGS.MAX_SIDEBAR_DISPLAY).map((item) => {
                     const isActive = activeTag === item.tag.name;
                     return (
                       <button

@@ -1,6 +1,7 @@
 import { db } from './db';
 import { bookmark, tag, bookmarkTag } from './db/schema';
 import { eq, and, isNull, like, or, desc, asc, sql, inArray } from 'drizzle-orm';
+import { PAGINATION } from './constants';
 
 export interface CreateBookmarkData {
   userId: string;
@@ -77,41 +78,52 @@ export async function createBookmark(data: CreateBookmarkData) {
   return newBookmark;
 }
 
-// Helper function to add tags to bookmark (without transaction)
+// Optimized batch function to add tags to bookmark (fixes N+1 query problem)
 async function addTagsToBookmarkSimple(
   bookmarkId: string,
   userId: string,
   tagNames: string[]
 ) {
-  for (const tagName of tagNames) {
-    // Create tag if it doesn't exist
-    const [existingTag] = await db
-      .select()
-      .from(tag)
-      .where(and(eq(tag.userId, userId), eq(tag.name, tagName)))
-      .limit(1);
+  if (tagNames.length === 0) return;
 
-    let tagId: string;
-    if (existingTag) {
-      tagId = existingTag.id;
-    } else {
-      const [newTag] = await db
-        .insert(tag)
-        .values({
+  // Step 1: Batch query all existing tags in a single database call
+  const existingTags = await db
+    .select()
+    .from(tag)
+    .where(and(eq(tag.userId, userId), inArray(tag.name, tagNames)));
+
+  const existingTagNames = new Set(existingTags.map((t) => t.name));
+  const existingTagIds = existingTags.map((t) => t.id);
+
+  // Step 2: Identify tags that need to be created
+  const newTagNames = tagNames.filter((name) => !existingTagNames.has(name));
+
+  // Step 3: Batch insert new tags if any
+  let newTagIds: string[] = [];
+  if (newTagNames.length > 0) {
+    const insertedTags = await db
+      .insert(tag)
+      .values(
+        newTagNames.map((name) => ({
           userId,
-          name: tagName,
+          name,
           createdAt: new Date(),
-        })
-        .returning();
-      tagId = newTag.id;
-    }
+        }))
+      )
+      .returning();
+    newTagIds = insertedTags.map((t) => t.id);
+  }
 
-    // Create bookmark-tag association
-    await db.insert(bookmarkTag).values({
-      bookmarkId,
-      tagId,
-      createdAt: new Date(),
-    });
+  // Step 4: Batch insert all bookmark-tag associations
+  const allTagIds = [...existingTagIds, ...newTagIds];
+  if (allTagIds.length > 0) {
+    await db.insert(bookmarkTag).values(
+      allTagIds.map((tagId) => ({
+        bookmarkId,
+        tagId,
+        createdAt: new Date(),
+      }))
+    );
   }
 }
 
@@ -123,7 +135,7 @@ export async function getBookmarks(options: BookmarkListOptions) {
     sortBy = 'createdAt',
     sortOrder = 'desc',
     page = 1,
-    pageSize = 50,
+    pageSize = PAGINATION.DEFAULT_PAGE_SIZE,
   } = options;
 
   // Build where conditions
@@ -183,7 +195,7 @@ export async function getBookmarks(options: BookmarkListOptions) {
   if (filters.tags && filters.tags.length > 0) {
     query = query.having(
       sql`array_agg(${tag.name}) @> ARRAY[${sql.raw(filters.tags.map(t => `'${t}'`).join(','))}]::text[]`
-    );
+    ) as typeof query;
   }
 
   const bookmarks = await query
@@ -204,7 +216,7 @@ export async function getBookmarks(options: BookmarkListOptions) {
       .groupBy(bookmark.id)
       .having(
         sql`array_agg(${tag.name}) @> ARRAY[${sql.raw(filters.tags.map(t => `'${t}'`).join(','))}]::text[]`
-      );
+      ) as typeof countQuery;
   }
 
   const countResult = await countQuery;
@@ -255,8 +267,13 @@ export async function updateBookmark(
   userId: string,
   data: UpdateBookmarkData
 ) {
-  // Update bookmark fields
-  const updateData: any = {
+  // Build type-safe update data
+  const updateData: {
+    title?: string;
+    description?: string;
+    starred?: boolean;
+    updatedAt: Date;
+  } = {
     updatedAt: new Date(),
   };
 
