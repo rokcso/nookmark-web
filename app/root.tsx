@@ -11,6 +11,14 @@ import type { Route } from "./+types/root";
 import { Toaster } from "~/components/ui/sonner";
 import "./app.css";
 
+export const meta: Route.MetaFunction = () => {
+  return [
+    { title: "Nookmark - 智能书签管理" },
+    { name: "description", content: "优雅的书签管理工具，帮助你更好地组织和管理网页收藏" },
+    { name: "theme-color", content: "#3b82f6" },
+  ];
+};
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -22,11 +30,17 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
+  // Favicons
+  { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+  { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+  { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+  // PWA manifest
+  { rel: "manifest", href: "/manifest.json" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
