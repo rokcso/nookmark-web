@@ -13,8 +13,8 @@ import "./app.css";
 
 export const meta: Route.MetaFunction = () => {
   return [
-    { title: "Nookmark - 智能书签管理" },
-    { name: "description", content: "优雅的书签管理工具，帮助你更好地组织和管理网页收藏" },
+    { title: "Nookmark - Smart Bookmark Management" },
+    { name: "description", content: "Elegant bookmark management tool to help you better organize and manage your web collections" },
     { name: "theme-color", content: "#3b82f6" },
   ];
 };

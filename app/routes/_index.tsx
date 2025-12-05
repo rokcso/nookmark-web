@@ -30,13 +30,13 @@ export default function LandingPage() {
                 to="/login"
                 className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
-                登录
+                Sign In
               </Link>
               <Link
                 to="/signup"
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
               >
-                免费注册
+                Get Started
               </Link>
             </div>
           </div>
@@ -47,25 +47,25 @@ export default function LandingPage() {
       <section className="px-4 sm:px-6 lg:px-8 pt-20 pb-16 md:pt-32 md:pb-24">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-            优雅的书签管理工具
+            Elegant Bookmark Management
             <br />
-            <span className="text-blue-600 dark:text-blue-500">让收藏更有价值</span>
+            <span className="text-blue-600 dark:text-blue-500">Make Your Collection Valuable</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto">
-            Nookmark 帮助你更好地组织和管理网页收藏，让重要的内容触手可及。支持标签分类、全文搜索、收藏星标等强大功能。
+            Nookmark helps you better organize and manage your web collections, keeping important content at your fingertips. Features include tag categorization, full-text search, starred favorites, and more.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/signup"
               className="w-full sm:w-auto px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg hover:shadow-xl transition-all"
             >
-              免费开始使用
+              Get Started for Free
             </Link>
             <Link
               to="/login"
               className="w-full sm:w-auto px-8 py-3 text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 rounded-lg transition-all"
             >
-              已有账号？登录
+              Already have an account? Sign In
             </Link>
           </div>
         </div>
@@ -75,10 +75,10 @@ export default function LandingPage() {
       <section className="px-4 sm:px-6 lg:px-8 py-16 md:py-24 bg-white dark:bg-gray-800/50">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-4">
-            为什么选择 Nookmark？
+            Why Choose Nookmark?
           </h2>
           <p className="text-center text-gray-600 dark:text-gray-400 mb-16 max-w-2xl mx-auto">
-            我们提供简洁而强大的功能，让你的书签管理更加高效
+            We provide simple yet powerful features to make your bookmark management more efficient
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -88,10 +88,10 @@ export default function LandingPage() {
                 <Bookmarks className="w-6 h-6 text-blue-600 dark:text-blue-500" weight="duotone" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                智能收藏
+                Smart Bookmarking
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                一键保存网页，自动提取标题、描述和图标，让你的收藏更加完整
+                Save web pages with one click, automatically extracting titles, descriptions, and icons for complete collections
               </p>
             </div>
 
@@ -101,10 +101,10 @@ export default function LandingPage() {
                 <Tag className="w-6 h-6 text-purple-600 dark:text-purple-500" weight="duotone" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                标签分类
+                Tag Organization
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                使用标签灵活组织书签，支持多标签，让分类更加精确
+                Flexibly organize bookmarks with tags, support multiple tags for precise categorization
               </p>
             </div>
 
@@ -114,10 +114,10 @@ export default function LandingPage() {
                 <MagnifyingGlass className="w-6 h-6 text-green-600 dark:text-green-500" weight="duotone" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                全文搜索
+                Full-Text Search
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                快速搜索标题、描述和 URL，即时找到你需要的书签
+                Quickly search titles, descriptions, and URLs to instantly find the bookmarks you need
               </p>
             </div>
 
@@ -127,10 +127,10 @@ export default function LandingPage() {
                 <Star className="w-6 h-6 text-yellow-600 dark:text-yellow-500" weight="duotone" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                收藏星标
+                Starred Favorites
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                为重要书签添加星标，快速访问常用内容
+                Star important bookmarks for quick access to frequently used content
               </p>
             </div>
 
@@ -140,10 +140,10 @@ export default function LandingPage() {
                 <Globe className="w-6 h-6 text-red-600 dark:text-red-500" weight="duotone" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                多端同步
+                Multi-Device Sync
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                云端存储，随时随地访问你的书签，支持 Web 和浏览器扩展
+                Cloud storage allows you to access your bookmarks anytime, anywhere. Supports Web and browser extensions
               </p>
             </div>
 
@@ -153,10 +153,10 @@ export default function LandingPage() {
                 <Lightning className="w-6 h-6 text-indigo-600 dark:text-indigo-500" weight="duotone" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                快速高效
+                Fast & Efficient
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                简洁的界面设计，流畅的操作体验，让书签管理更加轻松
+                Clean interface design and smooth operation experience make bookmark management easier
               </p>
             </div>
           </div>
@@ -167,16 +167,16 @@ export default function LandingPage() {
       <section className="px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-            准备好开始了吗？
+            Ready to Get Started?
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-            立即注册，免费使用 Nookmark 管理你的网页收藏
+            Sign up now and start managing your web bookmarks with Nookmark for free
           </p>
           <Link
             to="/signup"
             className="inline-block px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg hover:shadow-xl transition-all"
           >
-            免费注册
+            Get Started for Free
           </Link>
         </div>
       </section>
@@ -193,10 +193,10 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-6">
               <Link to="/login" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                登录
+                Sign In
               </Link>
               <Link to="/signup" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                注册
+                Sign Up
               </Link>
             </div>
           </div>

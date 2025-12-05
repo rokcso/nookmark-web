@@ -15,8 +15,8 @@ import type { Session } from '~/lib/auth/auth.server';
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'Nookmark - 书签管理' },
-    { name: 'description', content: '智能书签管理系统' },
+    { title: 'Nookmark - Bookmark Management' },
+    { name: 'description', content: 'Smart Bookmark Management System' },
   ];
 };
 
@@ -161,14 +161,14 @@ export default function Index() {
                 <DialogTrigger asChild>
                   <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white text-sm rounded-md transition-colors flex items-center gap-1.5">
                     <Plus className="w-4 h-4" weight="bold" />
-                    添加书签
+                    Add Bookmark
                   </button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>添加新书签</DialogTitle>
+                    <DialogTitle>Add New Bookmark</DialogTitle>
                     <DialogDescription>
-                      添加一个新的书签到你的收藏
+                      Add a new bookmark to your collection
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleAddBookmark} className="space-y-4 mt-4">
@@ -185,11 +185,11 @@ export default function Index() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="title" className="text-sm font-medium">标题 *</Label>
+                      <Label htmlFor="title" className="text-sm font-medium">Title *</Label>
                       <Input
                         id="title"
                         type="text"
-                        placeholder="书签标题"
+                        placeholder="Bookmark Title"
                         value={newBookmark.title}
                         onChange={(e) => setNewBookmark({ ...newBookmark, title: e.target.value })}
                         required
@@ -197,31 +197,31 @@ export default function Index() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="description" className="text-sm font-medium">描述</Label>
+                      <Label htmlFor="description" className="text-sm font-medium">Description</Label>
                       <Input
                         id="description"
                         type="text"
-                        placeholder="书签描述（可选）"
+                        placeholder="Bookmark description (optional)"
                         value={newBookmark.description}
                         onChange={(e) => setNewBookmark({ ...newBookmark, description: e.target.value })}
                         className="text-sm"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="tags" className="text-sm font-medium">标签</Label>
+                      <Label htmlFor="tags" className="text-sm font-medium">Tags</Label>
                       <Input
                         id="tags"
                         type="text"
-                        placeholder="标签1, 标签2, 标签3"
+                        placeholder="tag1, tag2, tag3"
                         value={newBookmark.tags}
                         onChange={(e) => setNewBookmark({ ...newBookmark, tags: e.target.value })}
                         className="text-sm"
                       />
-                      <p className="text-xs text-gray-500 dark:text-gray-400">用逗号分隔多个标签</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Separate multiple tags with commas</p>
                     </div>
                     <DialogFooter>
                       <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700">
-                        {isSubmitting ? '添加中...' : '添加书签'}
+                        {isSubmitting ? 'Adding...' : 'Add Bookmark'}
                       </Button>
                     </DialogFooter>
                   </form>
@@ -229,7 +229,7 @@ export default function Index() {
               </Dialog>
               <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white text-sm rounded-md transition-colors flex items-center gap-1.5">
                 <Gear className="w-4 h-4" weight="bold" />
-                设置
+                Settings
               </button>
             </div>
           </div>
@@ -244,14 +244,14 @@ export default function Index() {
             <Input
               type="search"
               name="search"
-              placeholder="搜索书签（标题、描述、URL）..."
+              placeholder="Search bookmarks (title, description, URL)..."
               className="pl-9 text-sm bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
               defaultValue={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <Button type="submit" variant="outline" size="sm" className="text-sm">
-            搜索
+            Search
           </Button>
         </Form>
       </div>
@@ -264,14 +264,14 @@ export default function Index() {
             {/* Sort and Stats */}
             <div className="flex items-center justify-between text-sm">
               <div className="text-gray-600 dark:text-gray-400">
-                共 <span className="font-semibold text-gray-900 dark:text-white">{bookmarksData.total}</span> 个书签
+                Total <span className="font-semibold text-gray-900 dark:text-white">{bookmarksData.total}</span> bookmarks
               </div>
               <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                <span className="text-xs">排序：</span>
+                <span className="text-xs">Sort by:</span>
                 <select className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-2 py-1">
-                  <option>创建时间 ↓</option>
-                  <option>更新时间 ↓</option>
-                  <option>标题 A-Z</option>
+                  <option>Created Time ↓</option>
+                  <option>Updated Time ↓</option>
+                  <option>Title A-Z</option>
                 </select>
               </div>
             </div>
@@ -281,7 +281,7 @@ export default function Index() {
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
                 <BookmarkSimple className="mx-auto w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" weight="light" />
                 <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  {searchTerm ? '没有找到匹配的书签' : '还没有书签，开始添加吧！'}
+                  {searchTerm ? 'No matching bookmarks found' : 'No bookmarks yet. Start adding!'}
                 </p>
                 <button
                   onClick={() => setIsAddDialogOpen(true)}

@@ -51,7 +51,7 @@ export async function createBookmark(data: CreateBookmarkData) {
     .limit(1);
 
   if (existing.length > 0) {
-    throw new Error('书签已存在');
+    throw new Error('Bookmark already exists');
   }
 
   // Create bookmark

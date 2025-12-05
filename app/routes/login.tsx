@@ -12,8 +12,8 @@ import { GoogleLogo } from '@phosphor-icons/react';
 
 export const meta: MetaFunction = () => {
   return [
-    { title: '登录 - Nookmark' },
-    { name: 'description', content: '登录到 Nookmark 书签管理系统' },
+    { title: 'Sign In - Nookmark' },
+    { name: 'description', content: 'Sign in to Nookmark Bookmark Management' },
   ];
 };
 
@@ -42,7 +42,7 @@ export default function Login() {
         callbackURL: '/bookmarks',
       });
     } catch (error) {
-      toast.error('登录失败，请检查邮箱和密码');
+      toast.error('Login failed. Please check your email and password');
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);
@@ -57,7 +57,7 @@ export default function Login() {
         callbackURL: '/bookmarks',
       });
     } catch (error) {
-      toast.error('Google 登录失败');
+      toast.error('Google sign in failed');
       console.error('Google login error:', error);
       setIsLoading(false);
     }
@@ -67,9 +67,9 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">欢迎回来</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
           <CardDescription className="text-center">
-            登录到你的 Nookmark 账户
+            Sign in to your Nookmark account
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -82,7 +82,7 @@ export default function Login() {
             disabled={isLoading}
           >
             <GoogleLogo className="mr-2 h-4 w-4" weight="bold" />
-            使用 Google 登录
+            Sign in with Google
           </Button>
 
           <div className="relative">
@@ -90,14 +90,14 @@ export default function Login() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">或使用邮箱</span>
+              <span className="bg-background px-2 text-muted-foreground">Or sign in with email</span>
             </div>
           </div>
 
           {/* Email/Password Login Form */}
           <form onSubmit={handleEmailLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">邮箱</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -109,7 +109,7 @@ export default function Login() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">密码</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -121,15 +121,15 @@ export default function Login() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? '登录中...' : '登录'}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-center text-muted-foreground">
-            还没有账户？{' '}
+            Don't have an account?{' '}
             <Link to="/signup" className="text-primary hover:underline">
-              立即注册
+              Sign up now
             </Link>
           </div>
         </CardFooter>
