@@ -2,7 +2,6 @@ import { type MetaFunction, type LoaderFunctionArgs, type ActionFunctionArgs } f
 import { useLoaderData, useSubmit, useNavigation, useNavigate, useSearchParams, Form, Link } from 'react-router';
 import { useState } from 'react';
 import { requireAuth } from '~/lib/auth/require-auth';
-import { signOut } from '~/lib/auth/auth.client';
 import { getBookmarks, getUserTags, createBookmark, deleteBookmark, toggleBookmarkStar, updateBookmark } from '~/lib/bookmarks.server';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -10,7 +9,7 @@ import { Textarea } from '~/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '~/components/ui/dialog';
 import { Label } from '~/components/ui/label';
 import { Card, CardContent } from '~/components/ui/card';
-import { BookmarkSimple, SignOut, MagnifyingGlass, Plus, Star, Trash, Tag as TagIcon, Gear } from '@phosphor-icons/react';
+import { BookmarkSimple, MagnifyingGlass, Plus, Star, Trash, Tag as TagIcon, Gear } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import type { Session } from '~/lib/auth/auth.server';
 
@@ -128,16 +127,6 @@ export default function Index() {
     description: string;
     tags: string;
   } | null>(null);
-
-  const handleSignOut = async () => {
-    await signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          window.location.href = '/login';
-        },
-      },
-    });
-  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -305,10 +294,13 @@ export default function Index() {
                   </form>
                 </DialogContent>
               </Dialog>
-              <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white text-sm rounded-md transition-colors flex items-center gap-1.5">
+              <Link
+                to="/settings"
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white text-sm rounded-md transition-colors flex items-center gap-1.5"
+              >
                 <Gear className="w-3.5 h-3.5" weight="bold" />
                 Settings
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -599,21 +591,6 @@ export default function Index() {
                   })}
                 </div>
               )}
-            </div>
-
-            {/* User Info Card */}
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mt-4">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Current User</div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white mb-3 truncate">
-                {session.user.name || session.user.email}
-              </div>
-              <button
-                onClick={handleSignOut}
-                className="w-full px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded transition-colors flex items-center justify-center gap-1.5"
-              >
-                <SignOut className="w-3.5 h-3.5" weight="bold" />
-                Sign Out
-              </button>
             </div>
           </div>
         </div>
