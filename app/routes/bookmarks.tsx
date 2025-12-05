@@ -201,11 +201,11 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <header className="">
         <div className="max-w-5xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity">
-              <BookmarkSimple className="w-7 h-7 text-blue-600 dark:text-blue-400" weight="fill" />
+            <div className="flex items-center gap-2.5">
+              <img src="/logo.png" alt="Nookmark" className="w-8 h-8" />
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Nookmark</h1>
             </div>
             <div className="flex items-center gap-2">
@@ -460,6 +460,13 @@ export default function Index() {
                         >
                           {item.bookmark.url}
                         </a>
+
+                        {/* Description */}
+                        {item.bookmark.description && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 line-clamp-2">
+                            {item.bookmark.description}
+                          </p>
+                        )}
 
                         {/* Meta info and actions */}
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
